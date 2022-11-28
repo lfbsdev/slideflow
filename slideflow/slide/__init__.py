@@ -20,6 +20,7 @@ from os.path import exists, join
 from types import SimpleNamespace
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
+import gc
 import cv2
 import numpy as np
 import pandas as pd
@@ -929,6 +930,7 @@ class _BaseLoader:
             img_laplace = np.abs(skimage.filters.laplace(gray))
             gaussian = skimage.filters.gaussian(img_laplace, sigma=blur_radius)
             blur_mask = gaussian <= blur_threshold
+            del img_laplace, gray, gaussian, thumb
             lev = self.slide.level_count - 1
             self.qc_mask = blur_mask
 
@@ -975,6 +977,7 @@ class _BaseLoader:
             flags = cv2.THRESH_OTSU+cv2.THRESH_BINARY_INV
             _, otsu_mask = cv2.threshold(img_med, 0, 255, flags)
             otsu_mask = otsu_mask.astype(bool)
+            del hsv_img, img_med, scaled_polys, otsu_thumb
             self.qc_mask = otsu_mask
 
         # If performing both, ensure the mask sizes are equivalent (shrinks to
@@ -991,6 +994,7 @@ class _BaseLoader:
             )
             self.blur_burden = blur / (blur_mask.shape[0] * blur_mask.shape[1])
             log.debug(f"Blur burden: {self.blur_burden}")
+            del blur, blur_mask
 
         # Filter coordinates
         img = self.apply_qc_mask(self.qc_mask, filter_threshold=filter_threshold)
