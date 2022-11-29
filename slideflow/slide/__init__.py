@@ -15,6 +15,7 @@ import os
 import random
 import time
 import warnings
+import gc
 from functools import partial
 from os.path import exists, join
 from types import SimpleNamespace
@@ -931,6 +932,8 @@ class _BaseLoader:
             gaussian = skimage.filters.gaussian(img_laplace, sigma=blur_radius)
             blur_mask = gaussian <= blur_threshold
             del img_laplace, gray, gaussian, thumb
+            n_trash = gc.collect()
+            log.warning(f'Collected {n_trash} objects at blur')
             lev = self.slide.level_count - 1
             self.qc_mask = blur_mask
 
@@ -978,6 +981,8 @@ class _BaseLoader:
             _, otsu_mask = cv2.threshold(img_med, 0, 255, flags)
             otsu_mask = otsu_mask.astype(bool)
             del hsv_img, img_med, scaled_polys, otsu_thumb
+            n_trash = gc.collect()
+            log.warning(f'Collected {n_trash} objects at otsu')
             self.qc_mask = otsu_mask
 
         # If performing both, ensure the mask sizes are equivalent (shrinks to
@@ -995,6 +1000,8 @@ class _BaseLoader:
             self.blur_burden = blur / (blur_mask.shape[0] * blur_mask.shape[1])
             log.debug(f"Blur burden: {self.blur_burden}")
             del blur, blur_mask
+            n_trash = gc.collect()
+            log.warning(f'Collected {n_trash} objects at both')
 
         # Filter coordinates
         img = self.apply_qc_mask(self.qc_mask, filter_threshold=filter_threshold)
