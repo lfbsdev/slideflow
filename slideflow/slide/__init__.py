@@ -975,12 +975,13 @@ class _BaseLoader:
                     otsu_thumb,
                     mask=roi_mask.astype(np.uint8)
                 )
+                del scaled_polys
             hsv_img = cv2.cvtColor(otsu_thumb, cv2.COLOR_RGB2HSV)
             img_med = cv2.medianBlur(hsv_img[:, :, 1], 7)
             flags = cv2.THRESH_OTSU+cv2.THRESH_BINARY_INV
             _, otsu_mask = cv2.threshold(img_med, 0, 255, flags)
             otsu_mask = otsu_mask.astype(bool)
-            del hsv_img, img_med, scaled_polys, otsu_thumb
+            del hsv_img, img_med, otsu_thumb
             n_trash = gc.collect()
             log.warning(f'Collected {n_trash} objects at otsu')
             self.qc_mask = otsu_mask
